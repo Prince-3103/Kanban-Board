@@ -5,9 +5,32 @@ const done = document.querySelector("#done");
 const columns = [todo, progress, done];
 
 let dragElement = null;
-let tasksData = {};
+
+function init(){
+    loadTasks();
+    updateTaskCount();
+
+    dragEnterLeave(todo);
+    dragEnterLeave(progress);
+    dragEnterLeave(done);
+}
+init();
+
+function loadTasks(){
+    if(localStorage.getItem("tasks")){
+        const data = JSON.parse(localStorage.getItem("tasks"));
+
+        for(const col in data){
+            const column = document.querySelector(`#${col}`);
+            data[col].forEach(task => {
+                column.appendChild(createTask(task.title, task.desc))
+            })
+        }
+    }
+}
 
 function createTask(title, desc){
+    
     const taskOverview = document.createElement("div");
     taskOverview.classList.add("task");
     taskOverview.setAttribute("draggable", "true");
@@ -32,16 +55,21 @@ function createTask(title, desc){
     return taskOverview;
 }
 
-if(localStorage.getItem("tasks")){
-    const data = JSON.parse(localStorage.getItem("tasks"));
+function saveTasks(){
+    let tasksData = {};
 
-    for(const col in data){
-        const column = document.querySelector(`#${col}`);
-        data[col].forEach(task => {
-            column.appendChild(createTask(task.title, task.desc))
-        })
-    }
-    updateTaskCount();
+    columns.forEach((col)=>{
+        const tasks = col.querySelectorAll(".task");
+
+        tasksData[col.id] = Array.from(tasks).map((t)=>{
+
+            return{
+                title:  t.querySelector("h2").textContent,
+                desc: t.querySelector("p").textContent
+            }
+        });
+    });
+    localStorage.setItem("tasks", JSON.stringify(tasksData));
 }
 
 
@@ -71,14 +99,14 @@ function dragEnterLeave(column){
         e.preventDefault();
         column.appendChild(dragElement)
         column.classList.remove("hover-over")
+        saveTasks();
+
 
         updateTaskCount()
     })
 }
 
-dragEnterLeave(todo);
-dragEnterLeave(progress);
-dragEnterLeave(done);
+
 
 
 // Poping the add task modal
@@ -95,27 +123,20 @@ bg.addEventListener("click", ()=>{
 })
 
 addTask.addEventListener("click", ()=>{
-    const taskTitleInp = document.querySelector("#task-title-inp").value;
-    const taskDescInp = document.querySelector("#task-desc-inp").value;
+    const taskTitleInp = document.querySelector("#task-title-inp");
+    const taskDescInp = document.querySelector("#task-desc-inp");
 
-    todo.appendChild(createTask(taskTitleInp, taskDescInp));
+    if(taskTitleInp.value.trim()==="" || taskDescInp.value.trim()===""){
+        return;
+    }
+
+    todo.appendChild(createTask(taskTitleInp.value, taskDescInp.value));
 
     updateTaskCount()
 
-    columns.forEach((col)=>{
-        const tasks = col.querySelectorAll(".task");
-
-        tasksData[col.id] = Array.from(tasks).map((t)=>{
-
-            return{
-                title:  t.querySelector("h2").textContent,
-                desc: t.querySelector("p").textContent
-            }
-        });
-    });
-    localStorage.setItem("tasks", JSON.stringify(tasksData));
+    saveTasks();
 
     modal.classList.remove("active")
-    document.querySelector("#task-title-inp").value=""
-    document.querySelector("#task-desc-inp").value=""
+    taskTitleInp.value="";
+    taskDescInp.value="";
 })
