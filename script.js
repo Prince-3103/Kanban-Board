@@ -23,13 +23,15 @@ function loadTasks(){
         for(const col in data){
             const column = document.querySelector(`#${col}`);
             data[col].forEach(task => {
-                column.appendChild(createTask(task.title, task.desc))
+                createTask(task.title, task.desc, column);
             })
         }
     }
 }
 
-function createTask(title, desc){
+
+
+function createTask(title, desc, column){
     
     const taskOverview = document.createElement("div");
     taskOverview.classList.add("task");
@@ -52,6 +54,16 @@ function createTask(title, desc){
     taskOverview.addEventListener("drag", ()=>{
         dragElement = taskOverview;
     });
+    column.appendChild(taskOverview)
+
+    
+    const deleteBtn = taskOverview.querySelector(".dlt-btn");
+    deleteBtn.addEventListener("click", (e)=>{
+        taskOverview.remove();
+        saveTasks();
+        updateTaskCount();
+    })
+
     return taskOverview;
 }
 
@@ -130,7 +142,7 @@ addTask.addEventListener("click", ()=>{
         return;
     }
 
-    todo.appendChild(createTask(taskTitleInp.value, taskDescInp.value));
+    createTask(taskTitleInp.value, taskDescInp.value, todo);
 
     updateTaskCount()
 
